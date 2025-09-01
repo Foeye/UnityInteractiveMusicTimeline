@@ -15,10 +15,7 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 namespace IMT.Runtime.Track {
-    [TrackClipType(typeof(MusicPlaylistClip))]
-    [TrackBindingType(typeof(AudioSource))]
-    [TrackColor(0.2f, 0.5f, 0.8f)]
-    public class MusicPlaylistTrack : TrackAsset {
+    public partial class MusicPlaylistTrack : TrackAsset {
         public override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount) {
             return ScriptPlayable<MusicPlaylistMixerBehaviour>.Create(graph, inputCount);
         }
