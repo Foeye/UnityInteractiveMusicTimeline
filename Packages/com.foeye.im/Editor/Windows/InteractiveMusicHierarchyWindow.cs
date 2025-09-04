@@ -3,6 +3,7 @@ using UnityEngine;
 using UInteractiveMusic.Runtime;
 using UInteractiveMusic.Editor.Core;
 using UInteractiveMusic.Editor.Views;
+using UInteractiveMusic.Runtime.Node;
 
 namespace UInteractiveMusic.Editor {
     public class InteractiveMusicHierarchyWindow : EditorWindow {
@@ -77,7 +78,11 @@ namespace UInteractiveMusic.Editor {
             {
                 using (new EditorGUILayout.VerticalScope()) {
                     GUILayout.Space(EditorStyles.toolbar.fixedHeight);
-                    _rightPanel.Draw();
+                    if (_state.Selected is MusicSwitchContainerNode sc)  
+                    {  
+                        IMChildrenOverviewPanel.Draw(_state, sc); // 新封装  
+                        return;  
+                    }  
                 }
             }
             GUILayout.EndArea();
