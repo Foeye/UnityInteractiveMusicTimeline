@@ -1,16 +1,5 @@
 {
   "dependencies": {
-    "com.foeye.interactivemusictimeline": {
-      "version": "file:InteractiveMusicTimeline",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.modules.director": "1.0.0",
-        "com.unity.modules.animation": "1.0.0",
-        "com.unity.modules.audio": "1.0.0",
-        "com.unity.modules.particlesystem": "1.0.0"
-      }
-    },
     "com.foeye.uim": {
       "version": "file:com.foeye.im",
       "depth": 0,
@@ -137,9 +126,21 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.services.mediation": {
+      "version": "1.0.5",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.modules.ui": "1.0.0",
+        "com.unity.services.core": "1.4.0",
+        "com.unity.settings-manager": "1.0.3"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.settings-manager": {
       "version": "1.0.3",
-      "depth": 2,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -175,15 +176,16 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.timeline": {
-      "version": "file:com.unity.timeline@1.6.5",
+      "version": "1.6.4",
       "depth": 0,
-      "source": "embedded",
+      "source": "registry",
       "dependencies": {
+        "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.director": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
-        "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.particlesystem": "1.0.0"
-      }
+      },
+      "url": "https://packages.unity.com"
     },
     "com.unity.ugui": {
       "version": "1.0.0",
