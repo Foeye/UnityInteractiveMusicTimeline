@@ -1,0 +1,16 @@
+{
+    "name": "UInteractiveMusic.Editor",
+    "rootNamespace": "UInteractiveMusic.Editor",
+    "references": [
+        "GUID:a294dd6fc50cff84bb5c0ec5fef0f873"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

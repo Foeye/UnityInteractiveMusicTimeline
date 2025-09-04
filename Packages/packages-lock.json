@@ -11,6 +11,12 @@
         "com.unity.modules.particlesystem": "1.0.0"
       }
     },
+    "com.foeye.uim": {
+      "version": "file:com.foeye.im",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,

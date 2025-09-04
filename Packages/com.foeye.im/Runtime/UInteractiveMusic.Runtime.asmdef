@@ -1,0 +1,12 @@
+﻿{
+  "name": "UInteractiveMusic.Runtime",
+  "rootNamespace": "UInteractiveMusic.Runtime",
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}
