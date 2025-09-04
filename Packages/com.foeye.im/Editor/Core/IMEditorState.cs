@@ -4,6 +4,13 @@ using UInteractiveMusic.Runtime.Node;
 using UnityEditor;
 
 namespace UInteractiveMusic.Editor.Core {
+    
+    public enum IMRightTab  
+    {  
+        Contents = 0,  
+        MusicSwitch = 1  
+    }  
+    
     public class IMEditorState {
         // 面板与分隔条
         public float LeftWidth = 320f;
@@ -48,14 +55,20 @@ namespace UInteractiveMusic.Editor.Core {
         
         // CONTENT 标题展开/折叠  
         public bool ContentExpanded = true;  
-        // EditorPrefs  
-        private const string PrefContentExpanded = "UInteractiveMusic.ContentExpanded";  
+        // EditorPrefs keys  
+        private const string PrefRightTab = "UInteractiveMusic.RightTab";  
+        private const string PrefContentExpanded = "UInteractiveMusic.ContentExpanded"; 
+        
+        // 当前激活的右侧标签  
+        public IMRightTab RightTab = IMRightTab.Contents;  
+        
         public void LoadPrefs() {
             LeftWidth = EditorPrefs.GetFloat(PrefLeftWidthKey, LeftWidth);
             ColVolWidth = EditorPrefs.GetFloat(PrefColVolKey, ColVolWidth);
             ColLPFWidth = EditorPrefs.GetFloat(PrefColLPFKey, ColLPFWidth);
             ColNotesWidth = EditorPrefs.GetFloat(PrefColNotesKey, ColNotesWidth);
-            ColNameMin = EditorPrefs.GetFloat(PrefColNameMinKey, ColNameMin);
+            ColNameMin = EditorPrefs.GetFloat(PrefColNameMinKey, ColNameMin); 
+            RightTab = (IMRightTab)EditorPrefs.GetInt(PrefRightTab, 0);  
             ContentExpanded = EditorPrefs.GetBool(PrefContentExpanded, true);  
         }
 
@@ -65,6 +78,7 @@ namespace UInteractiveMusic.Editor.Core {
             EditorPrefs.SetFloat(PrefColLPFKey, ColLPFWidth);
             EditorPrefs.SetFloat(PrefColNotesKey, ColNotesWidth);
             EditorPrefs.SetFloat(PrefColNameMinKey, ColNameMin);
+            EditorPrefs.SetInt(PrefRightTab, (int)RightTab);  
             EditorPrefs.SetBool(PrefContentExpanded, ContentExpanded);  
         }
     }

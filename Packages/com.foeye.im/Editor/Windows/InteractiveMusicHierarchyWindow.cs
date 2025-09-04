@@ -13,6 +13,8 @@ namespace UInteractiveMusic.Editor {
 
         private InteractiveMusicHierarchyAsset _asset;
 
+        private int _rightPanelTab = 0; // 0: CONTENT, 可扩展更多标签
+
         [MenuItem("Window/Interactive Music/Hierarchy")]
         public static void Open() {
             var w = GetWindow<InteractiveMusicHierarchyWindow>();
@@ -43,19 +45,17 @@ namespace UInteractiveMusic.Editor {
         private void OnGUI() {
             DrawToolbar();
             var toolbarRect = GUILayoutUtility.GetLastRect();
-
             var contentRect = new Rect(0f, toolbarRect.yMax, position.width, position.height - toolbarRect.yMax);
-
             _state.LeftWidth = Mathf.Clamp(_state.LeftWidth, IMEditorState.MinLeftWidth,
                 Mathf.Min(IMEditorState.MaxLeftWidth, contentRect.width - 200f));
             var leftRect = new Rect(contentRect.x, contentRect.y, _state.LeftWidth, contentRect.height);
             var splitterRect = new Rect(leftRect.xMax, contentRect.y, IMEditorState.SplitterWidth, contentRect.height);
             var rightRect = new Rect(splitterRect.xMax, contentRect.y,
                 contentRect.width - leftRect.width - IMEditorState.SplitterWidth, contentRect.height);
-
+            
             IMEditorStyles.DrawPaneBackground(leftRect, true);
             IMEditorStyles.DrawPaneBackground(rightRect, false);
-
+            
             // 左侧（BeginArea + 无样式滚动，消除顶部空白）
             GUILayout.BeginArea(leftRect);
             {
@@ -70,19 +70,18 @@ namespace UInteractiveMusic.Editor {
                 }
             }
             GUILayout.EndArea();
-
             HandleSplitter(contentRect, splitterRect);
-
             // 右侧
             GUILayout.BeginArea(rightRect);
             {
                 using (new EditorGUILayout.VerticalScope()) {
-                    GUILayout.Space(EditorStyles.toolbar.fixedHeight);
-                    if (_state.Selected is MusicSwitchContainerNode sc)  
-                    {  
-                        IMChildrenOverviewPanel.Draw(_state, sc); // 新封装  
-                        return;  
-                    }  
+                    // 顶部标签与标题栏合并
+                    if (_state.Selected is MusicSwitchContainerNode sc) {
+                        if (_rightPanelTab == 0) {
+                            IMChildrenOverviewPanel.Draw(_state, sc);
+                        }
+                    }
+                    // 可扩展其他标签页内容
                 }
             }
             GUILayout.EndArea();
@@ -111,6 +110,19 @@ namespace UInteractiveMusic.Editor {
 
                 GUILayout.FlexibleSpace();
             }
+        }
+
+        private void DrawRightPanelTabs() {
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Toggle(_rightPanelTab == 0, "CONTENT", EditorStyles.toolbarButton, GUILayout.Width(80))) {
+                _rightPanelTab = 0;
+            }
+            // 可扩展更多标签页，如：
+            // if (GUILayout.Toggle(_rightPanelTab == 1, "其它", EditorStyles.toolbarButton, GUILayout.Width(80))) {
+            //     _rightPanelTab = 1;
+            // }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
         }
 
         private void HandleSplitter(Rect contentRect, Rect splitterRect) {

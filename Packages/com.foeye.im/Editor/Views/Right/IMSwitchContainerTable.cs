@@ -75,7 +75,7 @@ namespace UInteractiveMusic.Editor.Views {
         public static void Draw(IMEditorState state, MusicSwitchContainerNode root) {
             // 工具条：标题 + 搜索
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar)) {
-                GUILayout.Label("CONTENTS", EditorStyles.boldLabel);
+                /*GUILayout.Label("CONTENTS", EditorStyles.boldLabel);*/
                 GUILayout.FlexibleSpace();
                 state.SwitchSearch = GUILayout.TextField(
                     state.SwitchSearch,
