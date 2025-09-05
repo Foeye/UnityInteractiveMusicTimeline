@@ -1,15 +1,3 @@
-/**
-  * @file :UIMNode
-  * @brief :BRIEF
-  * @details : Detail of this file
-  * @author :六队
-  * @version :0.1
-  * @date :2025年9月4日
-  * @copyright :Foeye
- */
-
-// Assets/InteractiveMusic/Runtime/UIMNode.cs
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;

@@ -4,13 +4,11 @@ using UInteractiveMusic.Runtime.Node;
 using UnityEditor;
 
 namespace UInteractiveMusic.Editor.Core {
-    
-    public enum IMRightTab  
-    {  
-        Contents = 0,  
-        MusicSwitch = 1  
-    }  
-    
+    public enum IMRightTab {
+        Contents = 0,
+        MusicSwitch = 1
+    }
+
     public class IMEditorState {
         // 面板与分隔条
         public float LeftWidth = 320f;
@@ -52,24 +50,29 @@ namespace UInteractiveMusic.Editor.Core {
         private const string PrefColNotesKey = "UInteractiveMusic.Hierarchy.ColNotesWidth";
         private const string PrefColNameMinKey = "UInteractiveMusic.Hierarchy.ColNameMin";
 
-        
+
         // CONTENT 标题展开/折叠  
-        public bool ContentExpanded = true;  
+        public bool ContentExpanded = true;
+
         // EditorPrefs keys  
-        private const string PrefRightTab = "UInteractiveMusic.RightTab";  
-        private const string PrefContentExpanded = "UInteractiveMusic.ContentExpanded"; 
-        
+        private const string PrefRightTab = "UInteractiveMusic.RightTab";
+        private const string PrefContentExpanded = "UInteractiveMusic.ContentExpanded";
+
         // 当前激活的右侧标签  
-        public IMRightTab RightTab = IMRightTab.Contents;  
-        
+        public IMRightTab RightTab = IMRightTab.Contents;
+
+        // 拖放区域样式缓存  
+        public GUIStyle DropAreaStyle;
+        public GUIStyle PillStyle;
+
         public void LoadPrefs() {
             LeftWidth = EditorPrefs.GetFloat(PrefLeftWidthKey, LeftWidth);
             ColVolWidth = EditorPrefs.GetFloat(PrefColVolKey, ColVolWidth);
             ColLPFWidth = EditorPrefs.GetFloat(PrefColLPFKey, ColLPFWidth);
             ColNotesWidth = EditorPrefs.GetFloat(PrefColNotesKey, ColNotesWidth);
-            ColNameMin = EditorPrefs.GetFloat(PrefColNameMinKey, ColNameMin); 
-            RightTab = (IMRightTab)EditorPrefs.GetInt(PrefRightTab, 0);  
-            ContentExpanded = EditorPrefs.GetBool(PrefContentExpanded, true);  
+            ColNameMin = EditorPrefs.GetFloat(PrefColNameMinKey, ColNameMin);
+            RightTab = (IMRightTab)EditorPrefs.GetInt(PrefRightTab, 0);
+            ContentExpanded = EditorPrefs.GetBool(PrefContentExpanded, true);
         }
 
         public void SavePrefs() {
@@ -78,8 +81,26 @@ namespace UInteractiveMusic.Editor.Core {
             EditorPrefs.SetFloat(PrefColLPFKey, ColLPFWidth);
             EditorPrefs.SetFloat(PrefColNotesKey, ColNotesWidth);
             EditorPrefs.SetFloat(PrefColNameMinKey, ColNameMin);
-            EditorPrefs.SetInt(PrefRightTab, (int)RightTab);  
-            EditorPrefs.SetBool(PrefContentExpanded, ContentExpanded);  
+            EditorPrefs.SetInt(PrefRightTab, (int)RightTab);
+            EditorPrefs.SetBool(PrefContentExpanded, ContentExpanded);
+        }
+
+        public void EnsureSwitchStyles() {
+            if (DropAreaStyle == null) {
+                DropAreaStyle = new GUIStyle("HelpBox") {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontSize = 12,
+                    richText = true
+                };
+            }
+
+            if (PillStyle == null) {
+                PillStyle = new GUIStyle("Label") {
+                    normal = { textColor = new Color(0.85f, 0.9f, 1f) },
+                    padding = new RectOffset(8, 8, 2, 2),
+                    fontStyle = FontStyle.Bold
+                };
+            }
         }
     }
 }

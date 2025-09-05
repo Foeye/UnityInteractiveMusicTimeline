@@ -1,5 +1,4 @@
-﻿// Assets/UInteractiveMusic/Editor/Views/Right/IMChildrenOverviewPanel.cs
-using UnityEditor;
+﻿using UnityEditor;
 using UInteractiveMusic.Runtime;
 using UInteractiveMusic.Editor.Core;
 using UInteractiveMusic.Editor.Views;

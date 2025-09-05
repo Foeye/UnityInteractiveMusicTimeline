@@ -15,7 +15,11 @@ namespace UInteractiveMusic.Editor.Views {
         private const float ColumnSpacing = 8f;
 
         private const float DepthIndent = 14f;
+
         private const float IconSize = 16f;
+
+        // 新增：与左侧一致的小三角区域宽度
+        private const float FoldoutWidth = 12f;
 
         // 每列的最小宽度（拖拽时约束）
         private const float MinName = 100f;
@@ -28,40 +32,28 @@ namespace UInteractiveMusic.Editor.Views {
         private static readonly Color SeparatorLine = new Color(0, 0, 0, 0.35f);
         private static readonly Color SeparatorHot = new Color(0.24f, 0.48f, 0.90f, 0.6f);
 
+        // 原有 Row/CollectDescendants 可保留或删除，这里不再使用扁平化收集
         private struct Row {
             public IMNode node;
             public int depth;
         }
 
-        private static void CollectDescendants(IMNode root, List<Row> buffer, int depth) {
-            if (root.Children == null) return;
-            foreach (var c in root.Children) {
-                buffer.Add(new Row { node = c, depth = depth });
-                CollectDescendants(c, buffer, depth + 1);
-            }
-        }
-
         // 统一列计算：根据 state 的可调列宽计算每列 Rect
-        // 注意：Name 列为“剩余宽度”，在窗口过窄情况下可能小于其最小值
         private static void CalcColumns(IMEditorState state, Rect total,
             out Rect name, out Rect vol, out Rect lpf, out Rect notes,
             out float nameWidthOut) {
-            // 减去左右 padding
             total = new Rect(total.x + LeftPadding, total.y, Mathf.Max(0, total.width - LeftPadding - RightPadding),
                 total.height);
 
-            // 先基于 state 中的宽度（已可拖拽）
             float wVol = Mathf.Max(MinVol, state.ColVolWidth);
             float wLPF = Mathf.Max(MinLPF, state.ColLPFWidth);
             float wNotes = Mathf.Max(MinNotes, state.ColNotesWidth);
 
-            // 计算剩余给 Name 的宽度
             float fixedSum = wVol + wLPF + wNotes;
             float nameWidth = total.width - fixedSum - ColumnSpacing * 3f;
-            nameWidth = Mathf.Max(20f, nameWidth); // 极端情况下，至少保底留一点空间
+            nameWidth = Mathf.Max(20f, nameWidth);
             nameWidthOut = nameWidth;
 
-            // 实例化 Rect
             float x = total.x;
             name = new Rect(x, total.y, nameWidth, total.height);
             x += nameWidth + ColumnSpacing;
@@ -75,7 +67,6 @@ namespace UInteractiveMusic.Editor.Views {
         public static void Draw(IMEditorState state, MusicSwitchContainerNode root) {
             // 工具条：标题 + 搜索
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar)) {
-                /*GUILayout.Label("CONTENTS", EditorStyles.boldLabel);*/
                 GUILayout.FlexibleSpace();
                 state.SwitchSearch = GUILayout.TextField(
                     state.SwitchSearch,
@@ -88,88 +79,142 @@ namespace UInteractiveMusic.Editor.Views {
                 }
             }
 
-            // 表头（使用显式 Rect）
+            // 表头
             Rect headerRect = GUILayoutUtility.GetRect(0, HeaderHeight, GUILayout.ExpandWidth(true));
-
-            // 计算表头列矩形
             CalcColumns(state, headerRect, out var hName, out var hVol, out var hLPF, out var hNotes,
                 out float headerNameWidth);
 
-            // 绘制标题文本
             EditorGUI.LabelField(hName, "Name", EditorStyles.boldLabel);
             EditorGUI.LabelField(hVol, "Voice Volume", EditorStyles.boldLabel);
             EditorGUI.LabelField(hLPF, "Voice Low-pass Filter", EditorStyles.boldLabel);
             EditorGUI.LabelField(hNotes, "Notes", EditorStyles.boldLabel);
 
-            // 底部分隔线
             if (Event.current.type == EventType.Repaint)
                 EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1, headerRect.width, 1),
                     new Color(0, 0, 0, 0.25f));
 
-            // 绘制列分隔线并处理拖拽
             HandleSeparators(state, headerRect, hName, hVol, hLPF, hNotes, headerNameWidth);
 
-            // 内容区域（滚动）
+            // ========= 替换：内容区域改为树形递归绘制 =========
             using (var sv = new EditorGUILayout.ScrollViewScope(state.RightScroll)) {
                 state.RightScroll = sv.scrollPosition;
 
-                var rows = new List<Row>(64);
-                CollectDescendants(root, rows, 0);
+                int rowIndex = 0;
+                string filterLower = string.IsNullOrEmpty(state.SwitchSearch)
+                    ? null
+                    : state.SwitchSearch.ToLowerInvariant();
 
-                for (int i = 0; i < rows.Count; i++) {
-                    var r = rows[i];
-                    var n = r.node;
-
-                    // 过滤
-                    if (!string.IsNullOrEmpty(state.SwitchSearch) &&
-                        !n.DisplayName.ToLowerInvariant().Contains(state.SwitchSearch.ToLowerInvariant()))
-                        continue;
-
-                    Rect rowRect = GUILayoutUtility.GetRect(0, RowHeight, GUILayout.ExpandWidth(true));
-
-                    // 斑马纹
-                    if (Event.current.type == EventType.Repaint && (i & 1) == 1)
-                        EditorGUI.DrawRect(rowRect, new Color(1, 1, 1, EditorGUIUtility.isProSkin ? 0.02f : 0.04f));
-
-                    // 与表头一致的列计算
-                    CalcColumns(state, rowRect, out var cName, out var cVol, out var cLPF, out var cNotes, out _);
-
-                    // 名称列内部：缩进 + 图标 + 文本
-                    float innerX = cName.x + r.depth * DepthIndent;
-                    var iconRect = new Rect(innerX, rowRect.y + (RowHeight - IconSize) * 0.5f, IconSize, IconSize);
-                    Texture icon = IMNodeOps.GetIcon(n.NodeType);
-                    if (icon != null) GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
-
-                    var labelRect = new Rect(iconRect.xMax + 4, rowRect.y + 2, cName.xMax - (iconRect.xMax + 4), 16);
-                    EditorGUI.LabelField(labelRect, n.DisplayName);
-
-                    // 其余列：与表头对齐
-                    float newVol = EditorGUI.Slider(cVol, GUIContent.none, n.VoiceVolume, 0f, 100f);
-                    float newLPF = EditorGUI.Slider(cLPF, GUIContent.none, n.VoiceLowpass, 0f, 100f);
-                    string newNotes = EditorGUI.TextField(cNotes, GUIContent.none, n.Notes);
-
-                    // 变更提交
-                    if (!Mathf.Approximately(newVol, n.VoiceVolume) ||
-                        !Mathf.Approximately(newLPF, n.VoiceLowpass) ||
-                        !string.Equals(newNotes, n.Notes)) {
-                        Undo.RecordObject(n, "Edit Node Params");
-                        n.VoiceVolume = newVol;
-                        n.VoiceLowpass = newLPF;
-                        n.Notes = newNotes;
-                        EditorUtility.SetDirty(n);
-                    }
-
-                    // 点击选中
-                    if (rowRect.Contains(Event.current.mousePosition) &&
-                        Event.current.type == EventType.MouseDown && Event.current.button == 0) {
-                        state.Selected = n;
-                        GUI.changed = true;
-                        Event.current.Use();
+                if (root.Children != null) {
+                    foreach (var child in root.Children) {
+                        DrawNodeRecursive(state, child, 0, filterLower, ref rowIndex);
                     }
                 }
             }
         }
 
+        // 新增：是否有“子项槽位”（决定是否显示 Foldout）
+        private static bool HasChildrenSlot(IMNode n) {
+            return n.NodeType != MusicNodeType.MusicSegment;
+        }
+
+        // 新增：搜索显示策略——自己匹配或任一子孙匹配则显示该分支
+        private static bool ShouldShow(IMNode node, string filterLower) {
+            if (string.IsNullOrEmpty(filterLower)) return true;
+            if (!string.IsNullOrEmpty(node.DisplayName) &&
+                node.DisplayName.ToLowerInvariant().Contains(filterLower)) {
+                return true;
+            }
+
+            if (node.Children != null) {
+                foreach (var c in node.Children) {
+                    if (ShouldShow(c, filterLower)) return true;
+                }
+            }
+
+            return false;
+        }
+
+        // 新增：树形递归绘制
+        private static void DrawNodeRecursive(IMEditorState state, IMNode node, int depth, string filterLower,
+            ref int rowIndex) {
+            if (!ShouldShow(node, filterLower)) return;
+
+            Rect rowRect = GUILayoutUtility.GetRect(0, RowHeight, GUILayout.ExpandWidth(true));
+
+            // 斑马纹
+            if (Event.current.type == EventType.Repaint && (rowIndex & 1) == 1) {
+                EditorGUI.DrawRect(rowRect, new Color(1, 1, 1, EditorGUIUtility.isProSkin ? 0.02f : 0.04f));
+            }
+
+            // 选中高亮覆盖
+            if (Event.current.type == EventType.Repaint && state.Selected == node) {
+                EditorGUI.DrawRect(rowRect, IMEditorStyles.RowSelected);
+            }
+
+            // 列与单行绘制
+            CalcColumns(state, rowRect, out var cName, out var cVol, out var cLPF, out var cNotes, out _);
+            DrawSingleRow(state, node, depth, rowRect, cName, cVol, cLPF, cNotes);
+
+            rowIndex++;
+
+            // 递归子项
+            if (node.Expanded && node.Children != null) {
+                foreach (var c in node.Children) {
+                    DrawNodeRecursive(state, c, depth + 1, filterLower, ref rowIndex);
+                }
+            }
+        }
+
+        // 新增：单行绘制（Name 列：Foldout + Icon + Label；其余列沿用原控件）
+        private static void DrawSingleRow(
+            IMEditorState state,
+            IMNode n,
+            int depth,
+            Rect rowRect,
+            Rect cName, Rect cVol, Rect cLPF, Rect cNotes
+        ) {
+            // Name 列内部：缩进 + 可选 Foldout + 图标 + 文本
+            float x = cName.x + depth * DepthIndent;
+
+            bool showFoldout = HasChildrenSlot(n);
+            if (showFoldout) {
+                var foldRect = new Rect(x, rowRect.y + 2f, FoldoutWidth, RowHeight - 4f);
+                n.Expanded = EditorGUI.Foldout(foldRect, n.Expanded, GUIContent.none, true);
+                x += FoldoutWidth;
+            }
+
+            var iconRect = new Rect(x, rowRect.y + (RowHeight - IconSize) * 0.5f, IconSize, IconSize);
+            Texture icon = IMNodeOps.GetIcon(n.NodeType);
+            if (icon != null) GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
+
+            var labelRect = new Rect(iconRect.xMax + 4f, rowRect.y + 2f, cName.xMax - (iconRect.xMax + 4f), 16f);
+            EditorGUI.LabelField(labelRect, n.DisplayName);
+
+            // 其余列：与表头对齐（沿用原控件）
+            float newVol = EditorGUI.Slider(cVol, GUIContent.none, n.VoiceVolume, 0f, 100f);
+            float newLPF = EditorGUI.Slider(cLPF, GUIContent.none, n.VoiceLowpass, 0f, 100f);
+            string newNotes = EditorGUI.TextField(cNotes, GUIContent.none, n.Notes);
+
+            if (!Mathf.Approximately(newVol, n.VoiceVolume) ||
+                !Mathf.Approximately(newLPF, n.VoiceLowpass) ||
+                !string.Equals(newNotes, n.Notes)) {
+                Undo.RecordObject(n, "Edit Node Params");
+                n.VoiceVolume = newVol;
+                n.VoiceLowpass = newLPF;
+                n.Notes = newNotes;
+                EditorUtility.SetDirty(n);
+            }
+
+            // 点击选中（与左侧一致）
+            if (rowRect.Contains(Event.current.mousePosition) &&
+                Event.current.type == EventType.MouseDown && Event.current.button == 0) {
+                state.Selected = n;
+                GUI.changed = true;
+                Event.current.Use();
+            }
+        }
+
+        // 原有 HandleSeparators/BeginDrag/DrawSeparatorLine 维持不变
         private static void HandleSeparators(
             IMEditorState state,
             Rect headerRect,
@@ -177,29 +222,24 @@ namespace UInteractiveMusic.Editor.Views {
             float headerNameWidth) {
             var e = Event.current;
 
-            // 计算三个分隔线的 X 坐标（列右边缘）
             float x0 = hName.xMax; // Name|Vol
             float x1 = hVol.xMax; // Vol|LPF
             float x2 = hLPF.xMax; // LPF|Notes
 
-            // 构造命中区域（更宽），以及可见的中心线（细线）
             var sep0 = new Rect(x0 - SeparatorHit * 0.5f, headerRect.y, SeparatorHit, headerRect.height);
             var sep1 = new Rect(x1 - SeparatorHit * 0.5f, headerRect.y, SeparatorHit, headerRect.height);
             var sep2 = new Rect(x2 - SeparatorHit * 0.5f, headerRect.y, SeparatorHit, headerRect.height);
 
-            // Hover 光标
             EditorGUIUtility.AddCursorRect(sep0, MouseCursor.ResizeHorizontal);
             EditorGUIUtility.AddCursorRect(sep1, MouseCursor.ResizeHorizontal);
             EditorGUIUtility.AddCursorRect(sep2, MouseCursor.ResizeHorizontal);
 
-            // 可见分隔线
             if (Event.current.type == EventType.Repaint) {
                 DrawSeparatorLine(x0, headerRect);
                 DrawSeparatorLine(x1, headerRect);
                 DrawSeparatorLine(x2, headerRect);
             }
 
-            // 鼠标按下：开始拖拽
             if (e.type == EventType.MouseDown) {
                 if (sep0.Contains(e.mousePosition)) {
                     BeginDrag(state, 0, e.mousePosition.x, headerNameWidth);
@@ -215,12 +255,10 @@ namespace UInteractiveMusic.Editor.Views {
                 }
             }
 
-            // 拖拽过程中：更新列宽
             if (state.ColDragging != -1 && e.type == EventType.MouseDrag) {
                 float dx = e.mousePosition.x - state.DragStartMouseX;
 
                 switch (state.ColDragging) {
-                    // Name|Vol：改 Name 和 Vol
                     case 0: {
                         float pair = state.DragStartNameWidth + state.DragStartVolWidth;
                         float newName = Mathf.Clamp(state.DragStartNameWidth + dx, MinName, pair - MinVol);
@@ -229,7 +267,6 @@ namespace UInteractiveMusic.Editor.Views {
                         GUI.changed = true;
                         break;
                     }
-                    // Vol|LPF：改 Vol 和 LPF
                     case 1: {
                         float pair = state.DragStartVolWidth + state.DragStartLPFWidth;
                         float newVol = Mathf.Clamp(state.DragStartVolWidth + dx, MinVol, pair - MinLPF);
@@ -239,7 +276,6 @@ namespace UInteractiveMusic.Editor.Views {
                         GUI.changed = true;
                         break;
                     }
-                    // LPF|Notes：改 LPF 和 Notes
                     case 2: {
                         float pair = state.DragStartLPFWidth + state.DragStartNotesWidth;
                         float newLPF = Mathf.Clamp(state.DragStartLPFWidth + dx, MinLPF, pair - MinNotes);
@@ -254,14 +290,12 @@ namespace UInteractiveMusic.Editor.Views {
                 e.Use();
             }
 
-            // 结束拖拽
             if (state.ColDragging != -1 && (e.type == EventType.MouseUp || e.rawType == EventType.MouseUp)) {
                 state.ColDragging = -1;
-                state.SavePrefs(); // 立即持久化
+                state.SavePrefs();
                 e.Use();
             }
 
-            // 高亮当前拖拽分隔线
             if (state.ColDragging != -1 && Event.current.type == EventType.Repaint) {
                 float hx = state.ColDragging == 0 ? x0 : state.ColDragging == 1 ? x1 : x2;
                 var r = new Rect(hx - 1, headerRect.y, 2, headerRect.height);

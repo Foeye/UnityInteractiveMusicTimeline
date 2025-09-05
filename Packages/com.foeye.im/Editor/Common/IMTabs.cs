@@ -1,4 +1,3 @@
-// Assets/UInteractiveMusic/Editor/Views/Common/IMTabs.cs
 using UnityEditor;
 using UnityEngine;
 
